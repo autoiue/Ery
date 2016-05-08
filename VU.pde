@@ -30,4 +30,8 @@ public static class VU {
 
 		return q;
 	}
+
+	public static PVector pointingVector(PVector origin, PVector target){
+		return PVector.sub(target, origin);
+	}
 } 

@@ -1,56 +1,78 @@
-// float angleZ = 0;
-// int spinCount = 0;
+import peasy.*;
+import java.util.HashMap;
 
-final int NB_LYRE = 48;
-final float RADIUS = 500;
+PeasyCam cam;
+HashMap<String, CameraState> camViews;
+
+final int NB_LYRE = 40;
+final float RADIUS = 400;
+final int HEIGHT = 500;
+
+int _width, _height;
+
+boolean SHOW_SCENE = true;
+boolean SHOW_VECTORS = false;
+boolean SHOW_INFO = true;
+boolean SHOW_HUD = true;
+boolean SHOW_ORIGIN = false;
+boolean SHOW_LIGHTS = false;
 
 Lyre l[] =  new Lyre[NB_LYRE];
 
 void setup(){
-	size(1750,1750, P3D);
-	fill(255,0,0);
-	frameRate(60);
-	noSmooth();
+	size(3200,1800, P3D);
+	//noSmooth();
+	textFont(loadFont("RobotoMono-Regular-24.vlw"), 24);
+	
+	// peasycam bad window size workaround
+	_width = width;
+	_height = height;
+
 	surface.setResizable(true);
-	textSize(50);
-	textAlign(CENTER, CENTER);
+
+	frameRate(60);
+
+	cam = new PeasyCam(this, 0, 0, HEIGHT/2, 2*RADIUS+200);
+	camViews = new HashMap<String,CameraState>();
+
+	cam.rotateX(-HALF_PI + radians(25));
+	camViews.put("default", cam.getState());
+
+	cam.setSuppressRollRotationMode();
+	cam.setResetOnDoubleClick(false);
+	cam.setMinimumDistance(0);
+	cam.setMaximumDistance(5000);
 
 	for(int i = 0; i < NB_LYRE; i ++){
 		PVector pos = SU.Circle(RADIUS, NB_LYRE, i);
-		pos.z = 500;
-		l[i] = new Lyre(pos, 0f, 0f, 0f, 0f);
+		pos.z = HEIGHT;
+		l[i] = new Lyre(pos, 0f, 0f, PI/16.0f, HALF_PI);
 	}
-		
+
 }
 
 void draw(){
-	background(0);
+	background(0,20, 60);
 
 	int targetX = mouseX - width/2;
 	int targetY = mouseY - height/2;
 
+	PVector target = new PVector(targetX, targetY, 0);
+	for(int i = 0; i < NB_LYRE; i ++){
+		l[i].setTarget(target);
+	}
+
 	pushMatrix();
-		translate(width/2,height/2);
-		setCamera();
-		drawAxes();
-
-		PVector target = new PVector(targetX, targetY, 50);
-
-		
-		for(int i = 0; i < NB_LYRE; i ++){
-			l[i].setTarget(target);
-			l[i].draw();
-		}
-		drawTarget(target);
-	
+	if(SHOW_LIGHTS) drawLights();
+	if(SHOW_SCENE) drawScene();
+	if(SHOW_INFO)  drawInfo();
+	if(SHOW_SCENE) drawTargets(target);
+	if(SHOW_VECTORS) drawVectors();
+	if(SHOW_ORIGIN) drawAxes();
 	popMatrix();
-}
 
-void setCamera(){
-
-	camera(800, 400, 160, 0,0,450, 2,1,-1); // human
-	//camera(0, 0, 500, 0,0,0, 1,1,-1); // dessus
-	//camera(0, 0, 50, -10,-40,200, 1,1,1);
+	
+	if(SHOW_HUD) drawHUD();
 }
 
 void drawAxes(){
@@ -62,158 +84,75 @@ void drawAxes(){
 	line(0,0,0, 0,0,100);
 }
 
-void drawTarget(PVector target){
+void drawScene(){
+	stroke(255);
+	fill(100, 80);
+	ellipse(0, 0, 2*RADIUS, 2*RADIUS);
+	for(int i = 0; i < NB_LYRE; i ++){
+		l[i].draw();
+	}
+}
+
+void drawVectors(){
+	for(int i = 0; i < NB_LYRE; i ++){
+		l[i].drawVectors();
+	}
+}
+
+void drawLights(){
+	//lights();
+	for(int i = 0; i < NB_LYRE; i += NB_LYRE/8){
+		l[i].drawLight();
+	}
+}
+
+void drawTargets(PVector target){
 	stroke(255,0,0);
 	line(target.x - 10, target.y, target.z, target.x + 10, target.y, target.z);
 	line(target.x, target.y - 10, target.z, target.x, target.y + 10, target.z);
 	line(target.x, target.y, target.z - 10, target.x, target.y, target.z + 10);
 }
 
-class Lyre{
-	PVector position;
-	PVector normale;
-	PVector pointing;
-	PVector target;
-
-	float panAmplitude, 
-		tiltAmplitude, 
-		pan, tilt,
-		minBeamAngle, 
-		maxBeamAngle,
-		beamAngle;
-
-
-	public Lyre(PVector position, float panAmplitude, float tiltAmplitude, float minBeamAngle, float maxBeamAngle){
-		this(position, new PVector(0,0,position.z), panAmplitude, tiltAmplitude, minBeamAngle, maxBeamAngle);
-	}
-
-	// lyre pos, normale (origin), pan amplitude in rads, tilt amplitude in rads
-	public Lyre(PVector position, PVector pointing, float panAmplitude, float tiltAmplitude, float minBeamAngle, float maxBeamAngle){
-		// limitation pointing Z as to be == position Z
-		pointing.z = position.z;
-		this.position = position.copy();
-		this.pointing = pointing;
-		setBasePointing(pointing);
-
-		this.panAmplitude = panAmplitude;
-		this.tiltAmplitude = tiltAmplitude;
-		this.minBeamAngle = minBeamAngle;
-		this.maxBeamAngle = maxBeamAngle;
-		this.maxBeamAngle = beamAngle;
-		this.pan = 0;
-		this.tilt = 0;
-	}
-
-	public void setBaseNormale(PVector normale){
-		this.normale = normale.normalize(null);
-	}
-	public void setBasePointing(PVector point){
-		this.normale = pointingVector(position, point).normalize(null);
-	}
-
-	public void draw(){
-		pushBaseMatrix();
-			fill(200,200,200,120);
-			stroke(225);
-			pushMatrix();
-				translate(0,0,-30);
-				box(30,30,10);
-				pushMatrix();
-					// todo rotate pan here Z is pan
-					rotateZ(pan);
-
-					line(0,0,0, 50,0,0);
-					translate(0,-15,15);
-					box(10,5, 30);
-					translate(0,30,0);
-					box(10,5, 30);
-					pushMatrix();
-						// todo rotate tilt here
-						translate(0, -15, 15);
-						rotateY(tilt);
-						ellipse(0, 0, 25, 25);
-						line(0,0,0, 0,0,500);
-					popMatrix();
-				popMatrix();
-			popMatrix();
-			// origin
-			stroke(255, 127, 255);
-			line(0,0,0,100,0,0);
-		popBaseMatrix();
-	}
-	public void drawVectors(){
-		// draw normale
-		stroke(0, 255, 255);
-		PVector n = normale.copy();
-		n.setMag(100);
-		drawVectorAt(position, n);
-		// draw vector pointing target
-		stroke(255, 255, 0);
-		PVector t = pointingVector(position, target);
-		t.setMag(500);
-		drawVectorAt(position, t);
-
-		// draw origin
-		PVector o = VU.Zaxis.cross(normale);
-		o.setMag(100);
-		stroke(255, 0, 0);
-		drawVectorAt(position, o);
-
-		// perpendicular
-		PVector p = o.cross(normale);
-		p.mult(-1);
-		stroke(255, 0, 255);
-		drawVectorAt(position, p);
-
-		PVector h = VU.rotateAround(p, pan, n);
-		drawVectorAt(position, h);
-
-		//target projection on plan (p,o)
-		PVector tp = new PVector(PVector.dot(p, t), PVector.dot(o, t));
-		PVector tt = new PVector(PVector.dot(n, t), PVector.dot(o, t));
-		tp.setMag(100);
-		stroke(255);
-		//line(position.x,position.y,0, tp.x,tp.y,0);
-	}
-	public void drawLight(){}
-
-	private void pushBaseMatrix(){
-		pushMatrix();
-		translate(position.x, position.y, position.z);
-		orientBase();
-	}
-	private void popBaseMatrix(){
-		popMatrix();
-	}
-
-	public void setTarget(PVector target){
-		this.target = target;
-
-		PVector n = normale.copy();
-		PVector t = pointingVector(position, target);
-		PVector o = VU.Zaxis.cross(normale);
-		PVector p = o.cross(normale);
-		PVector tp = new PVector(PVector.dot(p, t), PVector.dot(o, t));
-
-		PVector h = VU.rotateAround(p, pan, n);
-		PVector tt = new PVector(PVector.dot(h, t), PVector.dot(normale, t));
-
-		pan = HALF_PI + atan2(tp.x, -tp.y);
-		tilt = PI + atan2(tt.x, -tt.y);
-
-	}
-
-	private void orientBase(){
-		rotateY(atan2(normale.x, normale.z));
-		rotateX(asin(-normale.y));
-
-		// LIMITATION : this works if normale.z == position.z
-		rotateZ(HALF_PI + atan2(normale.x, normale.z));
+void drawInfo(){
+	textSize(10);
+	textAlign(CENTER,CENTER);
+	float[] r = cam.getRotations();
+	for(int i = 0; i < NB_LYRE; i ++){
+		l[i].drawInfo(r,i);
 	}
 }
 
-PVector pointingVector(PVector origin, PVector target){
-	return PVector.sub(target, origin);
+void drawHUD(){
+	cam.beginHUD();
+	noStroke();
+	fill(0,0,0, 160);
+	//translate((_width-width), (_height-height)); // peasycam bad window size workaround
+
+	rect(0, height-200, width, 200);
+
+	fill(255);
+
+	textSize(24);
+	textAlign(LEFT, TOP);
+	text(Math.round(frameRate) +" FPS", 5,height-195);
+
+	cam.endHUD();
+}
+
+void keyReleased() {
+	if(key == 'r'){
+		cam.setState(camViews.get("default"), 300);
+	}else if (key == 't') {
+		SHOW_INFO = !SHOW_INFO;
+	}else if (key == 'y') {
+		SHOW_ORIGIN = !SHOW_ORIGIN;
+	}else if (key == 'u') {
+		SHOW_VECTORS = !SHOW_VECTORS;
+	}else if (key == 'i') {
+		SHOW_LIGHTS = !SHOW_LIGHTS;
+	}else if (key == 'o') {
+		SHOW_SCENE = !SHOW_SCENE;
+	}
 }
 
 void drawVectorAt(PVector position, PVector v){
