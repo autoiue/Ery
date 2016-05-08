@@ -1,16 +1,10 @@
 // float angleZ = 0;
 // int spinCount = 0;
 
-Lyre l;
-Lyre l1;
-Lyre l2;
-Lyre l3;
-Lyre l4;
+final int NB_LYRE = 48;
+final float RADIUS = 500;
 
-PVector Xaxis = new PVector(1,0,0);
-PVector Yaxis = new PVector(0,1,0);
-PVector Zaxis = new PVector(0,0,1);
-
+Lyre l[] =  new Lyre[NB_LYRE];
 
 void setup(){
 	size(1750,1750, P3D);
@@ -21,9 +15,11 @@ void setup(){
 	textSize(50);
 	textAlign(CENTER, CENTER);
 
-	l = new Lyre(new PVector(150f,-150f,50f), 0f,0f,0f,0f);
-	l1 = new Lyre(new PVector(-10f,-40f,200f), 0f,0f,0f,0f);
-	l2 = new Lyre(new PVector(-150f,150f,50f), 0f,0f,0f,0f);
+	for(int i = 0; i < NB_LYRE; i ++){
+		PVector pos = SU.Circle(RADIUS, NB_LYRE, i);
+		pos.z = 500;
+		l[i] = new Lyre(pos, 0f, 0f, 0f, 0f);
+	}
 		
 }
 
@@ -38,18 +34,13 @@ void draw(){
 		setCamera();
 		drawAxes();
 
-		PVector target = new PVector(targetX, 50, targetY);
+		PVector target = new PVector(targetX, targetY, 50);
 
-		l.setTarget(target);
-		l1.setTarget(target);
-		l2.setTarget(target);
-
-		l.draw();
-		l1.draw();
-		l2.draw();
-		l.drawVectors();
-		l1.drawVectors();
-		l2.drawVectors();
+		
+		for(int i = 0; i < NB_LYRE; i ++){
+			l[i].setTarget(target);
+			l[i].draw();
+		}
 		drawTarget(target);
 	
 	popMatrix();
@@ -57,9 +48,9 @@ void draw(){
 
 void setCamera(){
 
-	camera(400, 200, 360, 0,0,0, 2,1,-1); // basic
+	camera(800, 400, 160, 0,0,450, 2,1,-1); // human
 	//camera(0, 0, 500, 0,0,0, 1,1,-1); // dessus
-	//camera(0, 0, 50, -10,10,500, 1,1,1);
+	//camera(0, 0, 50, -10,-40,200, 1,1,1);
 }
 
 void drawAxes(){
@@ -93,7 +84,7 @@ class Lyre{
 
 
 	public Lyre(PVector position, float panAmplitude, float tiltAmplitude, float minBeamAngle, float maxBeamAngle){
-		this(position, new PVector(0,0,0), panAmplitude, tiltAmplitude, minBeamAngle, maxBeamAngle);
+		this(position, new PVector(0,0,position.z), panAmplitude, tiltAmplitude, minBeamAngle, maxBeamAngle);
 	}
 
 	// lyre pos, normale (origin), pan amplitude in rads, tilt amplitude in rads
@@ -163,7 +154,7 @@ class Lyre{
 		drawVectorAt(position, t);
 
 		// draw origin
-		PVector o = Zaxis.cross(normale);
+		PVector o = VU.Zaxis.cross(normale);
 		o.setMag(100);
 		stroke(255, 0, 0);
 		drawVectorAt(position, o);
@@ -200,7 +191,7 @@ class Lyre{
 
 		PVector n = normale.copy();
 		PVector t = pointingVector(position, target);
-		PVector o = Zaxis.cross(normale);
+		PVector o = VU.Zaxis.cross(normale);
 		PVector p = o.cross(normale);
 		PVector tp = new PVector(PVector.dot(p, t), PVector.dot(o, t));
 
