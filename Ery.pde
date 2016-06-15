@@ -4,9 +4,9 @@ import java.util.HashMap;
 PeasyCam cam;
 HashMap<String, CameraState> camViews;
 
-final int NB_LYRE = 40;
-final float RADIUS = 400;
-final int HEIGHT = 500;
+final int NB_LYRE = 32;
+final float RADIUS = 750;
+final int HEIGHT = 350;
 
 int _width, _height;
 
@@ -85,12 +85,12 @@ void drawAxes(){
 }
 
 void drawScene(){
-	stroke(255);
-	fill(100, 80);
-	ellipse(0, 0, 2*RADIUS, 2*RADIUS);
 	for(int i = 0; i < NB_LYRE; i ++){
 		l[i].draw();
 	}
+	fill(100, 80);
+	stroke(255);
+	ellipse(0, 0, 2*RADIUS, 2*RADIUS);
 }
 
 void drawVectors(){

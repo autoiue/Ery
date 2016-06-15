@@ -44,8 +44,8 @@ public class Lyre{
 
 	// draw lyre object using processing tools
 	public void draw(){
-		fill(200,200,200,120);
-		stroke(225);
+		fill(10,10,15);
+		stroke(40);
 
 		pushBaseMatrix();
 
