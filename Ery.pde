@@ -73,11 +73,14 @@ void setup(){
 
 	controllers = new LinkedHashMap<String, Controller>();
 	controllers.put("SinglePoint", new SinglePoint(this));
+	controllers.put("Circle", new Circle(this));
 	controllers.put("Foyers", new Foyers(this));
-	controllers.put("FoyersDiv", new Foyers(this));
+	controllers.put("FoyersDiv", new FoyersDiv(this));
+	controllers.put("FoyersPos", new FoyersPos(this));
+	controllers.put("Haystack", new Haystack(this, NB_LYRE));
 
-	selectedController = "Foyers";
-	focusedController = "FoyersDiv";
+	selectedController = "SinglePoint";
+	focusedController = "SinglePoint";
 	
 
 }
@@ -190,7 +193,7 @@ void drawControllerList(){
 
 	for(String n : controllers.keySet()){
 		if(n.equals(selectedController)){
-			fill(120,0,0, 160);
+			fill(0,100,100, 160);
 		}else{
 			fill(0,160);
 		}
@@ -199,9 +202,9 @@ void drawControllerList(){
 		}else{
 			noStroke();
 		}
-		rect(width -400, offset, 400, 40);
+		rect(width -390, offset, 400, 40);
 		fill(255);
-		text(n, width - 380, offset + 10);
+		text(n, width - 370, offset + 10);
 		offset +=50;
 	}
 }
@@ -217,6 +220,8 @@ void keyReleased() {
 		SHOW_VECTORS = !SHOW_VECTORS;
 	}else if (key == 'o') {
 		SHOW_SCENE = !SHOW_SCENE;
+	}else if (key == ' ') {
+		controllers.get(selectedController).forward();
 	}
 } 
 
