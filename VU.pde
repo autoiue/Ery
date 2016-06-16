@@ -1,13 +1,15 @@
 public static class VU {
 
+	public static final PVector Origin = new PVector(0,0,0);
 	public static final PVector Xaxis = new PVector(1,0,0);
 	public static final PVector Yaxis = new PVector(0,1,0);
 	public static final PVector Zaxis = new PVector(0,0,1);
 
 	private VU () {}
 
-	public static PVector rotateAround(PVector p, float theta, PVector r){
+	public static PVector rotateAround(PVector p, float theta, PVector axe){
 		PVector q = new PVector(0f,0f,0f);
+		PVector r = axe.copy();
 
 		double costheta,sintheta;
 
