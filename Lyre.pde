@@ -2,16 +2,21 @@ public class Lyre{
 	private PVector position; 	// position of the center of beam
 	private float orientation;	// rotation on the normale
 	private PVector direction;	// beam direction
+	private float panAmplitude;    // total amplitude in rads;
+	private float tiltAmplitude;    // total amplitude in rads;
 
-	private float pan, tilt;   	// the data to be converted in dmx
+	private float pan, tilt, zoom;   	// the data to be converted in dmx
 
-	public Lyre(PVector position, float orientation){
+	public Lyre(PVector position, float orientation, float panAmplitude, float tiltAmplitude){
 
 		this.position = position;
 		this.orientation = orientation;
+		this.panAmplitude = panAmplitude;
+		this.tiltAmplitude = tiltAmplitude;
 
 		this.pan = 0;
 		this.tilt = 0;
+		this.zoom = 0;
 	}
 
 
@@ -87,6 +92,30 @@ public class Lyre{
 		stroke(255,0,255);
 		drawVectorAt(position, beamDir.setMag(100));
 	}
+	public void drawBeam(){
+		stroke(255);
+		strokeWeight(5);
+		drawVectorAt(position, direction);
+		strokeWeight(1);
+	}
+
+	public int[] getDMX(){
+		int[] r = new int[4];
+
+		int pi16 = Math.round((pan+panAmplitude/2)/panAmplitude*65536.0);
+		int ti16 = Math.round((tilt+tiltAmplitude/2)/tiltAmplitude*65536.0);
+		int zi16 = Math.round(zoom*65536.0);
+
+		r[0] = pi16 >> 8;
+		r[1] = pi16 & 0xFF;
+		r[0] = ti16 >> 8;
+		r[1] = ti16 & 0xFF;
+		r[0] = zi16 >> 8;
+		r[1] = zi16 & 0xFF;
+
+		return r;
+	}
+
 
 	public void drawInfo(float[] rotations, int index){
 		pushMatrix();
@@ -98,8 +127,12 @@ public class Lyre{
 		fill(255, 0, 0);
 		text(""+index, -25,0,0);
 		fill(255);
-		text("P "+Math.round(degrees(pan))+"°", 0,0,0);
-		text("T "+Math.round(degrees(tilt))+"°", 0,10,0);
+		text("P "+ pan/TWO_PI, 0,0,0);
+		text("T "+ tilt/TWO_PI, 0,10,0);
+		int ti16 = Math.round((tilt+tiltAmplitude/2)/tiltAmplitude*65536.0);
+		int pi16 = Math.round((pan+panAmplitude/2)/panAmplitude*65536.0);
+		text("P DMX "+ (pi16 >> 8), 0,20,0);
+		text("T DMX "+ (ti16 >> 8), 0,30,0);
 
 		popMatrix();
 	}
@@ -122,8 +155,10 @@ public class Lyre{
 		direction = VU.pointingVector(position, target);
 		PVector relDirection = direction.copy().rotate(-orientation);
 
-		pan = atan2(relDirection.y, relDirection.x);
+		float nPan = atan2(relDirection.y, relDirection.x);
 		tilt = asin((position.z-target.z)/ PVector.dist(position, target));
+
+		pan = nPan;
 	}
 
 	// orient the base 

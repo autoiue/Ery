@@ -9,6 +9,8 @@ XBOXController pad;
 PeasyCam cam;
 Map<String, CameraState> camViews;
 Map<String, Controller> controllers;
+PImage bg;
+Sender s;
 
 int selector = 2;
 
@@ -32,7 +34,8 @@ boolean SHOW_VECTORS = true;
 boolean SHOW_INFO = true;
 boolean SHOW_HUD = true;
 boolean SHOW_ORIGIN = true;
-boolean SHOW_LIGHTS = false;
+boolean SHOW_BEAM = false;
+boolean SHOW_BG = false;
 
 Lyre l[] =  new Lyre[NB_LYRE];
 
@@ -40,12 +43,13 @@ void setup(){
 	size(3000,1600, P3D);
 	//noSmooth();
 	textFont(loadFont("RobotoMono-Regular-24.vlw"), 24);
+	bg = loadImage("fondgiflyres2.png");
 	
 	// peasycam bad window size workaround
 	_width = width;
 	_height = height;
 
-	//surface.setResizable(true);
+	surface.setResizable(true);
 
 	frameRate(60);
 
@@ -64,8 +68,8 @@ void setup(){
 
 	for(int i = 0; i < NB_LYRE; i ++){
 		PVector pos = SU.Circle(RADIUS, NB_LYRE, i);
-		pos.z = HEIGHT;
-		l[i] = new Lyre(pos, -HALF_PI + TWO_PI/NB_LYRE * i);
+		pos.z = HEIGHT;										// 3PI == 540°; 1.5PI == 270°
+		l[i] = new Lyre(pos, -HALF_PI + TWO_PI/NB_LYRE * i, PI+TWO_PI, HALF_PI+PI);
 	}
 
 	//l[0] = new Lyre(new PVector(0,0,0), random(0, TWO_PI));
@@ -82,24 +86,23 @@ void setup(){
 	selectedController = "SinglePoint";
 	focusedController = "SinglePoint";
 	
-
+	try{
+		s = new Sender(this);
+	}catch (Exception e) {
+		
+	}
 }
 
 void draw(){
+	s.send();
+	// if(SHOW_BG){
+	// 	background(bg);
+	// }else{
+		background(0,20, 60);
+	//}
 	pad.update();
 
 	selectThings();
-
-	for(String n : pad.buttons.keySet()){
-		print(n+", ");
-	}
-	println();
-	for(String n : pad.sliders.keySet()){
-		print(n+", ");
-	}
-	println();
-
-	background(0,20, 60);
 
 	List<PVector> targets = controllers.get(selectedController).request(NB_LYRE);
 	for(int i = 0; i < NB_LYRE; i ++){
@@ -107,10 +110,10 @@ void draw(){
 	}
 
 	pushMatrix();
-	//if(SHOW_LIGHTS) drawLights();
 	if(SHOW_SCENE) drawScene();
 	if(SHOW_SCENE) drawTargets(targets);
 	if(SHOW_VECTORS) drawVectors();
+	if(SHOW_BEAM) drawBeams();
 	if(SHOW_ORIGIN) drawAxes();
 	if(SHOW_INFO)  drawInfo();
 	popMatrix();
@@ -146,6 +149,12 @@ void drawScene(){
 void drawVectors(){
 	for(int i = 0; i < NB_LYRE; i ++){
 		l[i].drawVectors();
+	}
+}
+
+void drawBeams(){
+	for(int i = 0; i < NB_LYRE; i ++){
+		l[i].drawBeam();
 	}
 }
 
@@ -220,6 +229,12 @@ void keyReleased() {
 		SHOW_VECTORS = !SHOW_VECTORS;
 	}else if (key == 'o') {
 		SHOW_SCENE = !SHOW_SCENE;
+	}else if (key == 'h') {
+		SHOW_HUD = !SHOW_HUD;
+	}else if (key == 'i') {
+		SHOW_BEAM = !SHOW_BEAM;
+	}else if (key == 'p') {
+		SHOW_BG = !SHOW_BG;
 	}else if (key == ' ') {
 		controllers.get(selectedController).forward();
 	}
