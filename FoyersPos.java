@@ -22,12 +22,13 @@ public class FoyersPos implements Controller{
 		mod = p.max(reflects, p.min(points, mod));
 
 		PVector point = new PVector(p.pad.sliders.get("x"), p.pad.sliders.get("y"));
-		point.mult(p.RADIUS - 100);
+		point.mult(p.RADIUS);
 		PVector pos = new PVector(p.pad.sliders.get("rx"), p.pad.sliders.get("ry"));
-		pos.mult(p.RADIUS - 100);
+		float z = (float)900.0 * (1+p.pad.sliders.get("rz"));
+		pos.mult(p.RADIUS);
 		List<PVector> l = new ArrayList<PVector>(points);
 		for (int i = 0; i < points ; i++) {
-			l.add(Ery.SU.Circle(point.mag(), reflects, i%mod).rotate(point.heading()).add(pos));
+			l.add(Ery.SU.Circle(point.mag(), reflects, i%mod, z).rotate(point.heading()).add(pos));
 		}
 
 		return l;

@@ -11,8 +11,11 @@ Map<String, CameraState> camViews;
 Map<String, Controller> controllers;
 PImage bg;
 Sender s;
+List<PVector> targets;
 
 int selector = 2;
+
+boolean freeze = false;
 
 String selectedController = "";
 String focusedController = "";
@@ -20,12 +23,14 @@ String focusedController = "";
 int selectedLyre = 0;
 int focusedLyre = 0;
 
-String selectedZoomMode = "";
-String focusedZoomMode = "";
+String selectedScene = "";
+String focusedScene = "";
+
+boolean zoomInvert = true;
 
 final int NB_LYRE = 32;
-final float RADIUS = 750;
-final int HEIGHT = 350;
+final float RADIUS = 785;
+final int HEIGHT = 346;
 
 int _width, _height;
 
@@ -40,7 +45,7 @@ boolean SHOW_BG = false;
 Lyre l[] =  new Lyre[NB_LYRE];
 
 void setup(){
-	size(3000,1600, P3D);
+	size(3800,2000, P3D);
 	//noSmooth();
 	textFont(loadFont("RobotoMono-Regular-24.vlw"), 24);
 	bg = loadImage("fondgiflyres2.png");
@@ -51,7 +56,7 @@ void setup(){
 
 	surface.setResizable(true);
 
-	frameRate(60);
+	frameRate(30);
 
 	pad = new XBOXController(this);
 
@@ -66,10 +71,13 @@ void setup(){
 	cam.setMinimumDistance(0);
 	cam.setMaximumDistance(5000);
 
+	targets = new ArrayList<PVector>();
+
 	for(int i = 0; i < NB_LYRE; i ++){
 		PVector pos = SU.Circle(RADIUS, NB_LYRE, i);
 		pos.z = HEIGHT;										// 3PI == 540°; 1.5PI == 270°
-		l[i] = new Lyre(pos, -HALF_PI + TWO_PI/NB_LYRE * i, PI+TWO_PI, HALF_PI+PI);
+		l[i] = new Lyre(pos, -HALF_PI + TWO_PI/NB_LYRE * i, PI+TWO_PI, PI+HALF_PI);
+		targets.add(new PVector(0,0,0));
 	}
 
 	//l[0] = new Lyre(new PVector(0,0,0), random(0, TWO_PI));
@@ -82,6 +90,7 @@ void setup(){
 	controllers.put("FoyersDiv", new FoyersDiv(this));
 	controllers.put("FoyersPos", new FoyersPos(this));
 	controllers.put("Haystack", new Haystack(this, NB_LYRE));
+	controllers.put("Scene", new Scene(this, NB_LYRE));
 
 	selectedController = "SinglePoint";
 	focusedController = "SinglePoint";
@@ -94,7 +103,6 @@ void setup(){
 }
 
 void draw(){
-	s.send();
 	// if(SHOW_BG){
 	// 	background(bg);
 	// }else{
@@ -104,10 +112,17 @@ void draw(){
 
 	selectThings();
 
-	List<PVector> targets = controllers.get(selectedController).request(NB_LYRE);
+	if(pad.getButton("button.5.press")) freeze = !freeze;
+
+	if(freeze)
+		targets = controllers.get(selectedController).request(NB_LYRE);
+	Float zoom = getZoom();
 	for(int i = 0; i < NB_LYRE; i ++){
 		l[i].setDirection(targets.get(i));
+		l[i].setZoom(zoom);
 	}
+
+	s.send(l);
 
 	pushMatrix();
 	if(SHOW_SCENE) drawScene();
@@ -122,6 +137,11 @@ void draw(){
 	if(SHOW_HUD) drawHUD();
 
 	pad.reset();
+}
+
+float getZoom(){
+	if(pad.getButton("button.4.press")){ zoomInvert = !zoomInvert;}
+	return zoomInvert ? 0.5 + pad.sliders.get("z") : (1 - (0.5 + pad.sliders.get("z")));
 }
 
 void drawAxes(){
@@ -193,6 +213,7 @@ void drawHUD(){
 	fill(255);
 	text(Math.round(frameRate) +" FPS", 5,height-195);
 	text(focusedLyre, 5,height-175);
+	text(pad.sliders.get("z"), 5, height-155);
 
 	cam.endHUD();
 }
@@ -219,7 +240,9 @@ void drawControllerList(){
 }
 
 void keyReleased() {
-	if(key == 'r'){
+	if(key == ESC || key == 's') {
+		((Scene)controllers.get("Scene")).save();
+	}else if(key == 'r'){
 		cam.setState(camViews.get("default"), 300);
 	}else if (key == 't') {
 		SHOW_INFO = !SHOW_INFO;

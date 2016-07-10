@@ -22,10 +22,11 @@ public class Foyers implements Controller{
 		mod = p.max(reflects, p.min(points, mod));
 
 		PVector point = new PVector(p.pad.sliders.get("x"), p.pad.sliders.get("y"));
+		float z = (float)800.0 * (1+p.pad.sliders.get("rz"));
 		point.mult(p.RADIUS - 100);
 		List<PVector> l = new ArrayList<PVector>(points);
 		for (int i = 0; i < points ; i++) {
-			l.add(Ery.SU.Circle(point.mag(), reflects, i%mod).rotate(point.heading()));
+			l.add(Ery.SU.Circle(point.mag(), reflects, i%mod, z).rotate(point.heading()));
 		}
 
 		return l;

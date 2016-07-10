@@ -12,7 +12,8 @@ public class SinglePoint implements Controller{
 	public void forward(){}
 
 	public List<PVector> request(int points){
-		PVector point = new PVector(p.pad.sliders.get("x")*p.RADIUS*1.2f, p.pad.sliders.get("y")*p.RADIUS*1.2f);
+		float z = (float)1000.0 * (1+p.pad.sliders.get("rz"));
+		PVector point = new PVector(p.pad.sliders.get("x")*p.RADIUS*2.0f, p.pad.sliders.get("y")*p.RADIUS*2.0f, z);
 		List<PVector> l = new ArrayList<PVector>(points);
 		for (int i = 0; i < points ; i++) {
 			l.add(point);

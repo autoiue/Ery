@@ -94,24 +94,24 @@ public class Lyre{
 	}
 	public void drawBeam(){
 		stroke(255);
-		strokeWeight(5);
+		strokeWeight(2+20*zoom);
 		drawVectorAt(position, direction);
 		strokeWeight(1);
 	}
 
 	public int[] getDMX(){
-		int[] r = new int[4];
+		int[] r = new int[6];
 
 		int pi16 = Math.round((pan+panAmplitude/2)/panAmplitude*65536.0);
-		int ti16 = Math.round((tilt+tiltAmplitude/2)/tiltAmplitude*65536.0);
+		int ti16 = Math.round(65536.0-((tilt-HALF_PI+tiltAmplitude/2)/tiltAmplitude*65536.0));
 		int zi16 = Math.round(zoom*65536.0);
 
-		r[0] = pi16 >> 8;
-		r[1] = pi16 & 0xFF;
-		r[0] = ti16 >> 8;
-		r[1] = ti16 & 0xFF;
-		r[0] = zi16 >> 8;
-		r[1] = zi16 & 0xFF;
+		r[0] = pi16 >> 8;	// pan 
+		r[1] = pi16 & 0xFF; // fine pan
+		r[2] = ti16 >> 8;
+		r[3] = ti16 & 0xFF;
+		r[4] = zi16 >> 8;
+		r[5] = zi16 & 0xFF;
 
 		return r;
 	}
@@ -159,6 +159,10 @@ public class Lyre{
 		tilt = asin((position.z-target.z)/ PVector.dist(position, target));
 
 		pan = nPan;
+	}
+
+	public void setZoom(float z){
+		zoom = Math.min(1, Math.max(0,z));
 	}
 
 	// orient the base 
